@@ -1,0 +1,106 @@
+﻿@page "/accountmanagement/{id:long}"
+
+@using Models
+@using Frontend.Data
+@inject IAccountConsumptionService _AccountConsumptionService
+@inject NavigationManager _NavigationManager
+
+<h1>Account Consumption for @id</h1>
+
+<EditForm Model="@form" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <label>
+        Days:
+        <InputNumber id="Days" @bind-Value="form.days" />
+    </label>
+
+    <label>
+        Type:
+        <InputText id="Type" @bind-Value="form.type" />
+    </label>
+    <button type="submit">Apply Filter</button>
+</EditForm>
+<p></p>
+
+@if (_accountConsumptionsToShow == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>Sum of Ressource Usage: @_sum.SumRessourceUsage</p>
+    <p>Sum of Total Cost: @_sum.SumCost</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Usage</th>
+                <th>Unit of Meassure</th>
+                <th>Total Cost</th>
+                <th>Currency</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ac in _accountConsumptionsToShow)
+            {
+                <tr>
+                    <td>@ac.Type</td>
+                    <td>@ac.RessourceUsage</td>
+                    <td>@ac.UnitOfMeassure</td>
+                    <td>@ac.Price.TotalCost</td>
+                    <td>@ac.Price.Currency</td>
+                    <td>@ac.TimeStamp</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+
+@code {
+    public class AccountConsumptionForm
+    {
+        public int days { get; set; }
+        public string type { get; set; }
+    }
+
+    public class SumOfConsumption
+    {
+        public double SumRessourceUsage { get; set; }
+        public double SumCost { get; set; }
+    }
+
+    [ParameterAttribute]
+    public long id { get; set; }
+
+    AccountConsumptionForm form;
+
+    private List<AccountConsumption> _accountConsumptions;
+    private List<AccountConsumption> _accountConsumptionsToShow;
+    private SumOfConsumption _sum;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sum = new SumOfConsumption();
+        form = new AccountConsumptionForm() { days = 30 };
+        _accountConsumptions = await _AccountConsumptionService.GetAccountConsumption(id);
+        _accountConsumptionsToShow = _accountConsumptions;
+        CalculateSumOfConsumption();
+    }
+
+    private async void HandleValidSubmit()
+    {
+        _accountConsumptionsToShow = _accountConsumptions.Where(x => x.Type == form.type && x.TimeStamp > DateTime.Now.AddDays(-form.days)).ToList();
+        CalculateSumOfConsumption();
+        StateHasChanged();
+    }
+
+    public void CalculateSumOfConsumption()
+    {
+        _sum.SumRessourceUsage = _accountConsumptionsToShow.Sum(x => x.RessourceUsage);
+        _sum.SumCost = _accountConsumptionsToShow.Sum(x => x.Price.TotalCost);
+    }
+}

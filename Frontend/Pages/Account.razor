@@ -1,0 +1,52 @@
+﻿@page "/account"
+
+@using Models
+@using Frontend.Data
+@inject IAccountService _accountService
+@inject NavigationManager NavigationManager
+
+<h1>Account</h1>
+
+@if (accounts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Account ID</th>
+                <th>Consumption</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var account in accounts)
+            {
+            <tr>
+                <td>@account.AccountId</td>
+                <td>
+                    <button class="btn btn-info" @onclick='(f => NavigateToAccountConsumption(account.AccountId))'>
+                        Account Consumption
+                    </button>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Models.Account> accounts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = await _accountService.GetAccounts();
+    }
+
+    protected void NavigateToAccountConsumption(long id)
+    {
+        NavigationManager.NavigateTo($"/accountmanagement/{id}");
+    }
+}
