@@ -45,6 +45,12 @@ namespace Frontend
                 client.BaseAddress = new Uri(Configuration["AccountControlURL"]);
                 client.DefaultRequestHeaders.Add("Accept", "text/json");
             });
+
+            services.AddHttpClient<IStatusConsumptionService, StatusConsumptionService>(client =>
+            {
+                client.BaseAddress = new Uri(Configuration["StatusControlURL"]);
+                client.DefaultRequestHeaders.Add("Accept", "text/json");
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

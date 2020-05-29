@@ -1,0 +1,88 @@
+﻿@page "/statusmanagement"
+
+@using Models
+@using Frontend.Data
+@inject IStatusConsumptionService _StatusConsumptionService
+@inject NavigationManager _NavigationManager
+
+<h1>Status Consumption</h1>
+
+<EditForm Model="@form" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <label>
+        Location:
+        <InputText id="Location" @bind-Value="form.location" />
+    </label>
+    <button type="submit">Apply Filter</button>
+</EditForm>
+<p></p>
+
+@if (_statusConsumptionsToShow == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>Sum of Ressource Usage: @_sum.SumRessourceUsage</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Location</th>
+                <th>Type</th>
+                <th>Usage</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sc in _statusConsumptionsToShow)
+            {
+                <tr>
+                    <td>@sc.Location</td>
+                    <td>@sc.Type</td>
+                    <td>@(sc.RessourceUsage + " " + sc.UnitOfMeassure) </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+
+@code {
+    public class StatusConsumptionForm
+    {
+        public string location { get; set; }
+    }
+
+    public class SumOfConsumption
+    {
+        public double SumRessourceUsage { get; set; }
+    }
+
+    StatusConsumptionForm form;
+
+    private List<StatusConsumption> _statusConsumptions;
+    private List<StatusConsumption> _statusConsumptionsToShow;
+    private SumOfConsumption _sum;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sum = new SumOfConsumption();
+        form = new StatusConsumptionForm() {};
+        _statusConsumptions = await _StatusConsumptionService.GetStatusConsumption();
+        _statusConsumptionsToShow = _statusConsumptions;
+        CalculateSumOfConsumption();
+    }
+
+    private async void HandleValidSubmit()
+    {
+        _statusConsumptionsToShow = _statusConsumptions?.Where(x => x.Location.Contains(form.location))?.ToList();
+        CalculateSumOfConsumption();
+        StateHasChanged();
+    }
+
+    public void CalculateSumOfConsumption()
+    {
+        _sum.SumRessourceUsage = _statusConsumptionsToShow.Sum(x => x.RessourceUsage);
+    }
+}
