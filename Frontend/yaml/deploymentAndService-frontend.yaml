@@ -18,12 +18,21 @@ spec:
       containers:
       - name: frontend
         image: mortenlyngosenquist/frontend:latest
+        resources:
+          requests:
+            memory: "4Mi"
+            cpu: "25m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
 metadata: 
   name: frontend
   namespace: "proj-gr4"
+  labels:
+    app: frontend
 spec:
   selector:
     app: frontend
